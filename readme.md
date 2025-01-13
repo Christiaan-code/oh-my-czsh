@@ -20,7 +20,12 @@ echo $ZSH
 mkdir -p ~/.zsh
 ```
 
-3. Add the following to your `.zshrc` file:
+3. Add a symbolic link to the `.zshrc` file in your home directory:
+```zsh
+ln -s ~/.zsh/.zshrc .zshrc
+```
+
+4. Add the following to your `.zshrc` file:
 ```zsh
 # Source main configuration file
 source ~/.zsh/config/config.zsh
