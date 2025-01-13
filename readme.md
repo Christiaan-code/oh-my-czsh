@@ -22,7 +22,7 @@ mkdir -p ~/.zsh
 
 3. Add a symbolic link to the `.zshrc` file in your home directory:
 ```zsh
-ln -s ~/.zsh/.zshrc .zshrc
+ln -s ~/.zshrc .zshrc
 ```
 
 4. Add the following to your `.zshrc` file:
