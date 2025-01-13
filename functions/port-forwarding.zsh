@@ -1,3 +1,7 @@
+# Forward a port using Microsoft DevTunnel
+# Installation: brew install --cask devtunnel
+# Documentation: https://learn.microsoft.com/en-us/azure/developer/dev-tunnels
+# Usage: forward 4200
 function forward() {
   echo -e "\n${BLUE_BOLD}Forwarding port $1...${NC}"
   local port="$1"
