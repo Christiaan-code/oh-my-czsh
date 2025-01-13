@@ -7,7 +7,7 @@ function co() {
     return 1
   fi
 
-  gco "$branch_name" && gpra
+  gco "$branch_name" >/dev/null && gpra
 }
 
 # Add autocompletion for the function

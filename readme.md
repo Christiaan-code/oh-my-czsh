@@ -22,11 +22,21 @@ mkdir -p ~/.zsh
 
 3. Add the following to your `.zshrc` file:
 ```zsh
-# Source all modular configurations
-for config_file in ~/.zsh/**/*.zsh; do
+# Source main configuration file
+source ~/.zsh/config/config.zsh
+
+# Source all other modular configurations (excluding root config directory)
+for config_file in ~/.zsh/^config/*.zsh(N); do
   source $config_file
 done
 ```
+
+## Directory Structure
+
+Everything that has to do with configuration should be in the `config` directory,
+and explicitly sourced in the appropriate order in the `config.zsh` file.
+
+All other files should be in the root directory, and will automatically be sourced by the `.zshrc` file.
 
 ## Usage
 
@@ -39,11 +49,12 @@ source ~/.zshrc
 
 ## Example Configuration
 
-Create a new alias file:
+Create a new function file:
 ```zsh
-# ~/.zsh/aliases/git.zsh
-alias gs='git status'
-alias gc='git commit'
+# ~/.zsh/functions/status.zsh
+function status() {
+  echo "Status: $(git status)"
+}
 ```
 
 ## Troubleshooting
