@@ -1,5 +1,7 @@
 function pr() {
-  gaa
+  if [[ -z $(git diff --cached --name-only) ]]; then
+    gaa
+  fi
   gcb "$1"
   gcmsg "$2"
   git push --set-upstream origin "$1"

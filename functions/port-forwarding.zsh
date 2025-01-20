@@ -7,6 +7,18 @@ function forward() {
   local port="$1"
   local browser_url=""
   local inspect_url=""
+  local tunnel_id=""
+
+  # Function to cleanup tunnel on script exit
+  cleanup() {
+    if [[ -n "$tunnel_id" ]]; then
+      devtunnel delete "$tunnel_id"
+    fi
+    exit 0
+  }
+
+  # Set up trap for Ctrl+C
+  trap cleanup SIGINT
 
   devtunnel host -p "$port" --allow-anonymous | while IFS= read -r line; do
     if [[ $line == *"Connect via browser"* ]]; then
@@ -14,6 +26,8 @@ function forward() {
       echo "$browser_url" | pbcopy
       echo -e "\n${GREEN_BOLD}🚀 Tunnel ready! Your application is available at: $browser_url${NC}"
       echo -e "${CYAN}URL has been copied to clipboard!${NC}"
+    elif [[ $line == *"Ready to accept connections for tunnel"* ]]; then
+      tunnel_id=$(echo "${line#*: }")
     # elif [[ $line == *"Inspect network activity"* ]]; then
     #   inspect_url=$(echo "${line#*: }")
     #   echo -e "\n${GREEN_BOLD}🔍 Inspect network activity at: $inspect_url${NC}"
