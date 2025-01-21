@@ -1,6 +1,6 @@
 # ZSH Configuration Guide
 
-This guide helps you set up a modular ZSH configuration using Oh-My-ZSH.
+This guide helps you set up a modular ZSH configuration with some cool features using Oh-My-ZSH. I call it Christiaan's ZSH (or CZSH for short).
 
 ## Prerequisites
 
@@ -15,9 +15,9 @@ This guide helps you set up a modular ZSH configuration using Oh-My-ZSH.
 echo $ZSH
 ```
 
-2. Create a `.zsh` directory in your home folder:
+2. Clone the ZSH configuration repository:
 ```zsh
-mkdir -p ~/.zsh
+git clone https://github.com/Christiaan-code/oh-my-czsh.git ~/.zsh
 ```
 
 3. Add a symbolic link to the `.zshrc` file in your home directory:
@@ -52,15 +52,31 @@ All other files should be in the root directory, and will automatically be sourc
 source ~/.zshrc
 ```
 
-## Example Configuration
+## Terminal Configuration
 
-Create a new function file:
-```zsh
-# ~/.zsh/functions/status.zsh
-function status() {
-  echo "Status: $(git status)"
-}
+### iTerm2 Installation
+
+For an enhanced terminal experience, we recommend installing [iTerm2](https://iterm2.com/downloads.html).
+
+To install:
+1. Download iTerm2 from the [official downloads page](https://iterm2.com/downloads.html)
+2. Extract the downloaded file
+3. Move iTerm.app to your Applications folder
+
+### Terminal Preferences
+
+You can configure your preferred terminal using the `configure-zsh` command:
+
+```bash
+configure-zsh
 ```
+
+This interactive command allows you to:
+- Choose between System Terminal and iTerm2 as your default terminal
+- Settings are saved to `~/.zsh/config/preferences/preferences.config.zsh`
+- Configuration is automatically loaded on shell startup
+
+The selected preferences will be used by various scripts and commands throughout the system.
 
 ## Troubleshooting
 
