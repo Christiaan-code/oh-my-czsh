@@ -1,10 +1,3 @@
-# Add git branch autocomplete for a function
-_git_branch_autocomplete() {
-  local branches
-  branches=($(git branch --format='%(refname:short)' 2>/dev/null))
-  _describe 'Existing branches' branches
-}
-
 function br() {
   git checkout -b "$1" >/dev/null 2>&1
   echo "${BLUE}Branch ${BLUE_BOLD}'$1'${BLUE} created${NC}"
