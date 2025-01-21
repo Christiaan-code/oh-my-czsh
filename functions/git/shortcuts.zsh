@@ -21,10 +21,18 @@ function skip() {
   echo "${BLUE}Skipped ${BLUE_BOLD}$1${BLUE}${NC}"
 }
 
+# Add autocomplete for skipped files
+_skipped_files_autocomplete() {
+  local skipped_files
+  skipped_files=($(list-skipped))
+  _describe 'Skipped files' skipped_files
+}
+
 function unskip() {
   git update-index --no-skip-worktree "$@" >/dev/null
   echo "${BLUE}Unskipped ${BLUE_BOLD}$1${BLUE}${NC}"
 }
+compdef _skipped_files_autocomplete unskip
 
 function unskip-all() {
   # Save list of skipped files

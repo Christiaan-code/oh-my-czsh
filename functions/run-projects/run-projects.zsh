@@ -30,6 +30,30 @@ function get_project_commands() {
   fi
 }
 
+function execute_project() {
+  local project_alias="$1"
+  local branch="$2"
+  local project_path=$(get_project_path "$project_alias")
+  local project_commands=$(get_project_commands "$project_alias")
+
+  # Expand the path
+  project_path="${project_path/#\~/$HOME}"
+
+  local node_version
+  if node_version=$(get_project_node_version "$project_alias"); then
+    echo "${MAGENTA}Executing: ${MAGENTA_BOLD}nvm use $node_version${NC}"
+    nvm use "$node_version"
+  fi
+  echo "project_path: $project_path"
+  cd "$project_path" &&
+    echo "${MAGENTA}Executing: ${MAGENTA_BOLD}co $branch${NC}" &&
+    co "$branch" &&
+    echo "${MAGENTA}Executing: ${MAGENTA_BOLD}yarn${NC}" &&
+    yarn &&
+    echo "${MAGENTA}Executing: ${MAGENTA_BOLD}$project_commands${NC}" &&
+    eval "$project_commands"
+}
+
 function run() {
   local branch="main"
   local projects=()
@@ -99,30 +123,15 @@ function run() {
   # Create a directory for logs
   mkdir -p "$log_dir"
 
-  # Start each project in background
+  # If only one project, run directly in main shell
+  if [ ${#projects[@]} -eq 1 ]; then
+    execute_project "${projects[1]}" "$branch"
+    return
+  fi
+
+  # Multiple projects - start each project in background
   for project_alias in "${projects[@]}"; do
-    local project_path=$(get_project_path "$project_alias")
-    local project_commands=$(get_project_commands "$project_alias")
-
-    # Expand the path
-    project_path="${project_path/#\~/$HOME}"
-
-    # Create a subshell for each project
-    (
-      local node_version
-      if node_version=$(get_project_node_version "$project_alias"); then
-        echo "${MAGENTA}Executing: ${MAGENTA_BOLD}nvm use $node_version${NC}"
-        nvm use "$node_version"
-      fi
-      cd "$project_path" &&
-        echo "${MAGENTA}Executing: ${MAGENTA_BOLD}co $branch${NC}" &&
-        co "$branch" &&
-        echo "${MAGENTA}Executing: ${MAGENTA_BOLD}yarn${NC}" &&
-        yarn &&
-        echo "${MAGENTA}Executing: ${MAGENTA_BOLD}$project_commands${NC}" &&
-        eval "$project_commands"
-    ) >"$log_dir/$project_alias.log" 2>&1 &
-
+    (execute_project "$project_alias" "$branch") >"$log_dir/$project_alias.log" 2>&1 &
     pids+=($!)
     echo "${GREEN}Started${NC} $project_alias (PID: $!)"
   done

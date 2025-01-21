@@ -2,7 +2,7 @@
 _git_branch_autocomplete() {
   local branches
   branches=($(git branch --format='%(refname:short)' 2>/dev/null))
-  _describe 'branch' branches
+  _describe 'Existing branches' branches
 }
 
 function br() {

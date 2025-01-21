@@ -16,7 +16,10 @@ function co() {
   # Unskip all files before checkout
   unskip-all >/dev/null
 
-  stash >/dev/null
+  local has_changes_in_worktree=$(git diff --name-only)
+  if [[ -n "$has_changes_in_worktree" ]]; then
+    stash >/dev/null
+  fi
 
   # Check if branch exists (either locally or remotely)
   if git show-ref --verify --quiet "refs/heads/$branch_name" ||
@@ -34,23 +37,26 @@ function co() {
     fi
   fi
 
-  # Try to pop the stash
-  if ! pop >/dev/null; then
-    echo -e "${YELLOW}Stash pop encountered conflicts.${NC}"
-    echo -e "${BLUE}Resolve the conflicts, then:${NC}"
-    echo -e "  - Press any key to continue and restore skipped files"
-    echo -e "  - Press 'c' to cancel and undo changes"
+  if [[ -n "$has_changes_in_worktree" ]]; then
+    # Try to pop the stash
+    if ! pop >/dev/null; then
+      echo -e "${YELLOW}Stash pop encountered conflicts.${NC}"
+      echo -e "${BLUE}Resolve the conflicts, then:${NC}"
+      echo -e "  - Press any key to continue and restore skipped files"
+      echo -e "  - Press 'c' to cancel and undo changes"
 
-    # Wait for user input
-    read -r -s -k 1 key
-    if [[ "$key" == "c" ]]; then
-      echo -e "\n${YELLOW}Cancelling checkout...${NC}"
-      gco "$current_branch" >/dev/null 2>&1
-      if $branch_created; then
-        force-delete "$branch_name"
+      # Wait for user input
+      read -r -s -k 1 key
+      if [[ "$key" == "c" ]]; then
+        echo -e "\n${YELLOW}Cancelling checkout...${NC}"
+        git reset --merge >/dev/null 2>&1
+        gco "$current_branch" >/dev/null 2>&1
+        if $branch_created; then
+          force-delete "$branch_name"
+        fi
+        pop >/dev/null
+        return 1
       fi
-      pop >/dev/null
-      return 1
     fi
   fi
 
