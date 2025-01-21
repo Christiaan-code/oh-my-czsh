@@ -1,5 +1,5 @@
 # Define projects configuration
-declare -A PROJECTS
+typeset -A PROJECTS
 
 # Format for projects.config.zsh:
 # PROJECTS[alias]="path|node:version(optional)|run_command1;run_command2;..."
@@ -44,7 +44,7 @@ function execute_project() {
     echo "${MAGENTA}Executing: ${MAGENTA_BOLD}nvm use $node_version${NC}"
     nvm use "$node_version"
   fi
-  echo "project_path: $project_path"
+
   cd "$project_path" &&
     echo "${MAGENTA}Executing: ${MAGENTA_BOLD}co $branch${NC}" &&
     co "$branch" &&
@@ -60,13 +60,17 @@ function run() {
   local i=1
   local pids=()
   local log_dir="/tmp/dev-projects"
+  local use_subshells=false
 
   # Function to cleanup processes and files on exit
   function cleanup() {
-    echo "\n${BLUE_BOLD}Stopping all projects...${NC}"
-    for pid in "${pids[@]}"; do
-      kill $pid 2>/dev/null
-    done
+    # Only show stopping message and cleanup pids if we're running multiple projects in subshells
+    if [ ${#projects[@]} -gt 1 ] && $use_subshells; then
+      echo "\n${BLUE_BOLD}Stopping all projects...${NC}"
+      for pid in "${pids[@]}"; do
+        kill $pid 2>/dev/null
+      done
+    fi
 
     # Clean up log files
     if [ -d "$log_dir" ]; then
@@ -98,6 +102,9 @@ function run() {
       fi
       branch="$next"
       i=$((i + 2))
+    elif [ "$current" = "-s" ] || [ "$current" = "--subshell" ]; then
+      use_subshells=true
+      i=$((i + 1))
     else
       projects+=("$current")
       i=$((i + 1))
@@ -129,24 +136,45 @@ function run() {
     return
   fi
 
-  # Multiple projects - start each project in background
-  for project_alias in "${projects[@]}"; do
-    (execute_project "$project_alias" "$branch") >"$log_dir/$project_alias.log" 2>&1 &
-    pids+=($!)
-    echo "${GREEN}Started${NC} $project_alias (PID: $!)"
-  done
+  # Multiple projects - start each project based on mode
+  if $use_subshells; then
+    # Start projects in subshells
+    for project_alias in "${projects[@]}"; do
+      (execute_project "$project_alias" "$branch") >"$log_dir/$project_alias.log" 2>&1 &
+      pids+=($!)
+      echo "${GREEN}Started ${GREEN_BOLD}$project_alias${GREEN} in subshell (PID: $!)${NC}"
+    done
 
-  echo "\n${BLUE_BOLD}All projects started! Tailing logs...${NC}\n"
+    echo "\n${BLUE_BOLD}All projects started! Tailing logs...${NC}\n"
 
-  # Use tail to follow all log files, replacing the header with project alias
-  tail -f "$log_dir"/*.log | awk '
-    /==> .*\.log <==/ {
-      # Extract project name from the path
-      match($0, /[^\/]+\.log/)
-      project=substr($0, RSTART, RLENGTH-4)
-      printf "\n%s%s%s\n", "'"${BLUE_BOLD}"'", project, "'"${NC}"'"
-      next
-    }
-    { print }
-  '
+    # Use tail to follow all log files
+    tail -f "$log_dir"/*.log | awk '
+      /==> .*\.log <==/ {
+        match($0, /[^\/]+\.log/)
+        project=substr($0, RSTART, RLENGTH-4)
+        printf "\n%s%s%s\n", "'"${BLUE_BOLD}"'", project, "'"${NC}"'"
+        next
+      }
+      { print }
+    '
+  else
+    # Start projects in new terminal windows
+    for project_alias in "${projects[@]}"; do
+      local project_path=$(get_project_path "$project_alias")
+      project_path="${project_path/#\~/$HOME}"
+
+      # Create a temporary script for this project
+      local temp_script="$log_dir/$project_alias.command"
+      echo "#!/bin/zsh" >"$temp_script"
+      echo "cd \"$project_path\"" >>"$temp_script"
+      echo "source ~/.zshrc" >>"$temp_script"
+      echo "execute_project \"$project_alias\" \"$branch\"" >>"$temp_script"
+      chmod +x "$temp_script"
+
+      # Use preferred terminal or fall back to default Terminal.app
+      open -a "${ZSH_PREFERENCES[preferred_terminal]:-Terminal}" "$temp_script"
+      echo "${GREEN}Started ${GREEN_BOLD}$project_alias${GREEN} in new window${NC}"
+    done
+  fi
 }
+compdef _run_projects_autocompletion run

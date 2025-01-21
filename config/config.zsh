@@ -1,3 +1,4 @@
+source ~/.zsh/config/preferences/configure-zsh.zsh
 source ~/.zsh/config/plugins/plugins.zsh
 for theme_file in ~/.zsh/config/themes/**/*.zsh; do
   source $theme_file
