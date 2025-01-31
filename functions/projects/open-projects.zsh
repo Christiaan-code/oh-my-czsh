@@ -1,4 +1,4 @@
-function open() {
+function op() {
   local projects=()
   # Throw error if no arguments were provided
   if [[ $# -eq 0 ]]; then
@@ -25,4 +25,4 @@ function open() {
     echo "${BLUE}Opened ${BLUE_BOLD}${project}${NC}"
   done
 }
-compdef _projects_autocompletion open
+compdef _projects_autocompletion op
