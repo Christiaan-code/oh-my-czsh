@@ -1,4 +1,4 @@
-_run_projects_autocompletion() {
+_projects_autocompletion() {
   local project_aliases=()
   for key in ${(k)PROJECTS}; do
     project_aliases+=($key)

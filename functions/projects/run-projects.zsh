@@ -1,35 +1,3 @@
-# Define projects configuration
-typeset -A PROJECTS
-
-# Format for projects.config.zsh:
-# PROJECTS[alias]="path|node:version(optional)|run_command1;run_command2;..."
-source ~/.zsh/functions/run-projects/projects.config.zsh
-
-function get_project_path() {
-  local project_name="$1"
-  echo "${PROJECTS[$project_name]%%|*}"
-}
-
-function get_project_node_version() {
-  local project_name="$1"
-  local without_path="${PROJECTS[$project_name]#*|}"
-  if [[ $without_path == node:* ]]; then
-    echo "${without_path%%|*}" | sed 's/node://'
-    return 0
-  fi
-  return 1
-}
-
-function get_project_commands() {
-  local project_name="$1"
-  local without_path="${PROJECTS[$project_name]#*|}"
-  if [[ $without_path == node:* ]]; then
-    echo "${without_path#*|}"
-  else
-    echo "$without_path"
-  fi
-}
-
 function execute_project() {
   local project_alias="$1"
   local branch="$2"
@@ -46,8 +14,10 @@ function execute_project() {
   fi
 
   cd "$project_path" &&
-    echo "${MAGENTA}Executing: ${MAGENTA_BOLD}co $branch${NC}" &&
-    co "$branch" &&
+    if [ -n "$branch" ]; then
+      echo "${MAGENTA}Executing: ${MAGENTA_BOLD}co $branch${NC}" &&
+        co "$branch"
+    fi &&
     echo "${MAGENTA}Executing: ${MAGENTA_BOLD}yarn${NC}" &&
     yarn &&
     echo "${MAGENTA}Executing: ${MAGENTA_BOLD}$project_commands${NC}" &&
@@ -55,7 +25,7 @@ function execute_project() {
 }
 
 function run() {
-  local branch="main"
+  local branch=""
   local projects=()
   local i=1
   local pids=()
@@ -125,7 +95,11 @@ function run() {
     fi
   done
 
-  echo "${BLUE_BOLD}Running ${#projects[@]} projects on branch:${GREEN} $branch${NC}"
+  if [ -n "$branch" ]; then
+    echo "${BLUE_BOLD}Running ${#projects[@]} project(s) on branch:${GREEN} $branch${NC}"
+  else
+    echo "${BLUE_BOLD}Running ${#projects[@]} project(s)${NC}"
+  fi
 
   # Create a directory for logs
   mkdir -p "$log_dir"
@@ -177,4 +151,4 @@ function run() {
     done
   fi
 }
-compdef _run_projects_autocompletion run
+compdef _projects_autocompletion run

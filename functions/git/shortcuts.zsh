@@ -41,6 +41,22 @@ function unskip-all() {
   echo "${BLUE}Unskipped all files${BLUE}${NC}"
 }
 
+function pull() {
+  # Capture the list of skipped files
+  local files_to_skip=$(list-skipped)
+
+  # Unskip all files before checkout
+  unskip-all >/dev/null
+
+  gpra
+
+  # Re-skip the previously skipped files
+  while IFS= read -r file; do
+    [[ -n "$file" ]] && skip "$file" >/dev/null
+  done <<<"$files_to_skip"
+
+}
+
 function pick() {
   git cherry-pick "$@" --no-commit -m 1 >/dev/null
   echo "${BLUE}Cherry pick completed${BLUE}${NC}"
