@@ -3,7 +3,7 @@ typeset -A PROJECTS
 
 # Format for projects.config.zsh:
 # PROJECTS[alias]="path|node:version(optional)|run_command1;run_command2;..."
-source ~/.zsh/functions/projects/projects.config.zsh
+source "$(dirname "$0")/projects.config.zsh"
 
 function get_project_path() {
   local project_name="$1"
