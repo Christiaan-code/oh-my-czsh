@@ -57,8 +57,13 @@ function pull() {
 
 }
 
-function pick() {
+function pick-no-commit() {
   git cherry-pick "$@" --no-commit -m 1 >/dev/null
+  echo "${BLUE}Cherry pick completed${BLUE}${NC}"
+}
+
+function pick() {
+  git cherry-pick "$@" -m 1 >/dev/null
   echo "${BLUE}Cherry pick completed${BLUE}${NC}"
 }
 
