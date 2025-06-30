@@ -17,3 +17,21 @@ _skipped_files_autocomplete() {
   skipped_files=($(list-skipped))
   _describe 'Skipped files' skipped_files
 }
+
+_co_all_autocomplete() {
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+
+  _arguments -C \
+    '1: :->branch' \
+    '*: :->projects'
+
+  case "$state" in
+    branch)
+      _git_branch_autocomplete
+      ;;
+    projects)
+      _projects_autocompletion
+      ;;
+  esac
+}
