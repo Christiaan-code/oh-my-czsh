@@ -31,8 +31,11 @@ ln -s ~/.zshrc .zshrc
 source ~/.zsh/config/config.zsh
 
 # Source all other modular configurations (excluding root config directory)
-for config_file in ~/.zsh/^config/*.zsh(N); do
-  source $config_file
+for config_file in ~/.zsh/**/*.zsh(N); do
+  # Skip files in the config directory as they're sourced via config.zsh
+  if [[ $config_file != *"/config/"* ]]; then
+    source $config_file
+  fi
 done
 ```
 
