@@ -11,21 +11,37 @@ This guide helps you set up a modular ZSH configuration with some cool features 
 ## Installation
 
 1. Ensure your `$ZSH` environment variable is set correctly:
+
 ```zsh
 echo $ZSH
 ```
 
 2. Clone the ZSH configuration repository:
+
 ```zsh
 git clone https://github.com/Christiaan-code/oh-my-czsh.git ~/.zsh
 ```
 
+3. **Option A: Automated Installation (Recommended)**
+
+Run the automated installation script:
+
+```zsh
+zsh ~/.zsh/config/install.zsh
+```
+
+This script will automatically complete steps 3-5 below.
+
+**Option B: Manual Installation**
+
 3. Add a symbolic link to the `.zshrc` file in your home directory:
+
 ```zsh
 ln -s ~/.zshrc .zshrc
 ```
 
 4. Add the following to your `.zshrc` file:
+
 ```zsh
 # Source main configuration file
 source ~/.zsh/config/config.zsh
@@ -37,6 +53,12 @@ for config_file in ~/.zsh/**/*.zsh(N); do
     source $config_file
   fi
 done
+```
+
+5. run the following command to create the projects.config.zsh file:
+
+```zsh
+echo '# PROJECTS[alias]="path|node:version(optional)|run_command1;run_command2;..."' > ~/.zsh/functions/projects/projects.config.zsh
 ```
 
 ## Directory Structure
@@ -51,6 +73,7 @@ All other files should be in the root directory, and will automatically be sourc
 1. Create new `.zsh` files in the appropriate subdirectories
 2. Files will be automatically sourced on shell startup
 3. Changes take effect after restarting your shell or running:
+
 ```zsh
 source ~/.zshrc
 ```
@@ -62,6 +85,7 @@ source ~/.zshrc
 For an enhanced terminal experience, we recommend installing [iTerm2](https://iterm2.com/downloads.html).
 
 To install:
+
 1. Download iTerm2 from the [official downloads page](https://iterm2.com/downloads.html)
 2. Extract the downloaded file
 3. Move iTerm.app to your Applications folder
@@ -75,6 +99,7 @@ configure-zsh
 ```
 
 This interactive command allows you to:
+
 - Choose between System Terminal and iTerm2 as your default terminal
 - Settings are saved to `~/.zsh/config/preferences/preferences.config.zsh`
 - Configuration is automatically loaded on shell startup
