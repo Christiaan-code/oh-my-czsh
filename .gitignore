@@ -1,2 +1,3 @@
 .zshrc
 *.config.zsh
+.vscode/*
