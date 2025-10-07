@@ -152,7 +152,17 @@ function build-multiplatform() {
       echo -n "Add additional tags? (e.g., v1.0.0, comma-separated, or press Enter to skip): "
       read ADDITIONAL_TAGS
   else
-      echo -e "${GREEN}🤖 Auto mode: No additional tags${NC}"
+      echo -e "${GREEN}🤖 Auto mode: No additional user tags${NC}"
+  fi
+
+  # Always add 'latest' tag unless the primary tag is already 'latest'
+  if [[ "$TAG" != "latest" ]]; then
+      if [[ -n "$ADDITIONAL_TAGS" ]]; then
+          ADDITIONAL_TAGS="latest,${ADDITIONAL_TAGS}"
+      else
+          ADDITIONAL_TAGS="latest"
+      fi
+      echo -e "${BLUE}📌 Always adding 'latest' tag${NC}"
   fi
 
   local FULL_IMAGE="${REGISTRY_URL}/${IMAGE_NAME}:${TAG}"
