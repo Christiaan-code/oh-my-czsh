@@ -11,6 +11,10 @@ function build-multiplatform() {
   #   -c, --context PATH       Build context path (default: .)
   #   --build-arg ARG=VALUE    Build arguments
   #   -a, --auto               Run in automatic mode (no prompts)
+  #
+  # Environment Variables (for automatic authentication):
+  #   DOCKER_REGISTRY_USERNAME  Registry username
+  #   DOCKER_REGISTRY_PASSWORD  Registry password
 
   setopt LOCAL_OPTIONS
   set -e
@@ -187,13 +191,39 @@ function build-multiplatform() {
 
   # Check if logged into registry
   echo "🔐 Checking registry authentication..."
-  if ! docker login "${REGISTRY_URL}" 2>/dev/null; then
-      echo -e "${YELLOW}⚠️  Not logged in to ${REGISTRY_URL}${NC}"
-      echo "Please login to your registry:"
-      docker login "${REGISTRY_URL}"
+  
+  # Try automatic login with environment variables first
+  if [[ -n "$DOCKER_REGISTRY_USERNAME" && -n "$DOCKER_REGISTRY_PASSWORD" ]]; then
+      echo -e "${BLUE}🔑 Using environment variables for authentication${NC}"
+      if echo "$DOCKER_REGISTRY_PASSWORD" | docker login "${REGISTRY_URL}" --username "$DOCKER_REGISTRY_USERNAME" --password-stdin 2>/dev/null; then
+          echo -e "${GREEN}✅ Successfully authenticated with environment variables${NC}"
+      else
+          echo -e "${RED}❌ Failed to authenticate with environment variables${NC}"
+          if [[ "$AUTO_MODE" == true ]]; then
+              echo -e "${RED}Auto mode requires valid DOCKER_REGISTRY_USERNAME and DOCKER_REGISTRY_PASSWORD${NC}"
+              return 1
+          fi
+          echo "Falling back to interactive login..."
+          docker login "${REGISTRY_URL}"
+      fi
+  # Check if already logged in
+  elif docker login "${REGISTRY_URL}" 2>/dev/null; then
+      echo -e "${GREEN}✅ Already authenticated with registry${NC}"
+  # Interactive login fallback
+  else
+      if [[ "$AUTO_MODE" == true ]]; then
+          echo -e "${RED}❌ Not authenticated with registry${NC}"
+          echo -e "${YELLOW}💡 For auto mode, set these environment variables:${NC}"
+          echo "   export DOCKER_REGISTRY_USERNAME=\"your-username\""
+          echo "   export DOCKER_REGISTRY_PASSWORD=\"your-password\""
+          return 1
+      else
+          echo -e "${YELLOW}⚠️  Not logged in to ${REGISTRY_URL}${NC}"
+          echo "Please login to your registry:"
+          docker login "${REGISTRY_URL}"
+          echo -e "${GREEN}✅ Authenticated with registry${NC}"
+      fi
   fi
-
-  echo -e "${GREEN}✅ Authenticated with registry${NC}"
 
   # Create buildx builder if it doesn't exist
   echo ""
