@@ -53,13 +53,36 @@ function build-multiplatform() {
       esac
   done
 
-  # Get parameters
-  echo ""
-  echo -n "Enter image name (e.g., whatsapp-automation): "
-  read IMAGE_NAME
+  # Get image name - try package.json first, then directory name
+  local IMAGE_NAME=""
+  
+  # Try to extract from package.json
+  if [[ -f "package.json" ]]; then
+      IMAGE_NAME=$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' package.json 2>/dev/null | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+      if [[ -n "$IMAGE_NAME" ]]; then
+          echo -e "${GREEN}📦 Found image name in package.json: ${IMAGE_NAME}${NC}"
+      fi
+  fi
+  
+  # Fallback to directory name if package.json doesn't exist or doesn't have a name
   if [[ -z "$IMAGE_NAME" ]]; then
-      echo -e "${RED}❌ Image name cannot be empty${NC}"
+      IMAGE_NAME=$(basename "$(pwd)")
+      echo -e "${BLUE}📁 Using directory name as image name: ${IMAGE_NAME}${NC}"
+  fi
+  
+  # Validate image name
+  if [[ -z "$IMAGE_NAME" ]]; then
+      echo -e "${RED}❌ Could not determine image name${NC}"
       return 1
+  fi
+  
+  # Allow manual override
+  echo ""
+  echo -n "Image name detected as '${IMAGE_NAME}'. Press Enter to use this, or type a different name: "
+  read USER_IMAGE_NAME
+  if [[ -n "$USER_IMAGE_NAME" ]]; then
+      IMAGE_NAME="$USER_IMAGE_NAME"
+      echo -e "${YELLOW}✏️  Using custom image name: ${IMAGE_NAME}${NC}"
   fi
 
   echo -n "Enter registry URL (default: registry.builtbychristiaan.com): "
