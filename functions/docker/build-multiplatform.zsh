@@ -4,6 +4,13 @@ function build-multiplatform() {
 
   # Multi-platform Docker Image Builder
   # This script builds and pushes images for both ARM64 and AMD64
+  # 
+  # Usage: build-multiplatform [OPTIONS]
+  # Options:
+  #   -f, --file DOCKERFILE    Specify Dockerfile (default: Dockerfile)
+  #   -c, --context PATH       Build context path (default: .)
+  #   --build-arg ARG=VALUE    Build arguments
+  #   -a, --auto               Run in automatic mode (no prompts)
 
   setopt LOCAL_OPTIONS
   set -e
@@ -32,6 +39,7 @@ function build-multiplatform() {
   local DOCKERFILE="Dockerfile"
   local BUILD_CONTEXT="."
   local BUILD_ARGS=""
+  local AUTO_MODE=false
 
   while [[ $# -gt 0 ]]; do
       case $1 in
@@ -46,6 +54,10 @@ function build-multiplatform() {
           --build-arg)
               BUILD_ARGS="$BUILD_ARGS --build-arg $2"
               shift 2
+              ;;
+          -a|--auto)
+              AUTO_MODE=true
+              shift
               ;;
           *)
               shift
@@ -76,25 +88,68 @@ function build-multiplatform() {
       return 1
   fi
   
-  # Allow manual override
-  echo ""
-  echo -n "Image name detected as '${IMAGE_NAME}'. Press Enter to use this, or type a different name: "
-  read USER_IMAGE_NAME
-  if [[ -n "$USER_IMAGE_NAME" ]]; then
-      IMAGE_NAME="$USER_IMAGE_NAME"
-      echo -e "${YELLOW}✏️  Using custom image name: ${IMAGE_NAME}${NC}"
+  # Allow manual override (unless in auto mode)
+  if [[ "$AUTO_MODE" == false ]]; then
+      echo ""
+      echo -n "Image name detected as '${IMAGE_NAME}'. Press Enter to use this, or type a different name: "
+      read USER_IMAGE_NAME
+      if [[ -n "$USER_IMAGE_NAME" ]]; then
+          IMAGE_NAME="$USER_IMAGE_NAME"
+          echo -e "${YELLOW}✏️  Using custom image name: ${IMAGE_NAME}${NC}"
+      fi
+  else
+      echo -e "${GREEN}🤖 Auto mode: Using detected image name: ${IMAGE_NAME}${NC}"
   fi
 
-  echo -n "Enter registry URL (default: registry.builtbychristiaan.com): "
-  read REGISTRY_URL
+  # Get registry URL
+  local REGISTRY_URL=""
+  if [[ "$AUTO_MODE" == false ]]; then
+      echo -n "Enter registry URL (default: registry.builtbychristiaan.com): "
+      read REGISTRY_URL
+  fi
   REGISTRY_URL=${REGISTRY_URL:-registry.builtbychristiaan.com}
+  
+  if [[ "$AUTO_MODE" == true ]]; then
+      echo -e "${GREEN}🤖 Auto mode: Using registry: ${REGISTRY_URL}${NC}"
+  fi
 
-  echo -n "Enter tag (default: latest): "
-  read TAG
-  TAG=${TAG:-latest}
+  # Get tag - try latest git tag first, then fallback to latest
+  local TAG=""
+  
+  # Try to get the latest git tag
+  if git rev-parse --git-dir &> /dev/null; then
+      TAG=$(git describe --tags --abbrev=0 2>/dev/null)
+      if [[ -n "$TAG" ]]; then
+          echo -e "${GREEN}🏷️  Found latest git tag: ${TAG}${NC}"
+      else
+          TAG="latest"
+          echo -e "${BLUE}🏷️  No git tags found, using: ${TAG}${NC}"
+      fi
+  else
+      TAG="latest"
+      echo -e "${YELLOW}🏷️  Not in a git repository, using: ${TAG}${NC}"
+  fi
+  
+  # Allow manual override (unless in auto mode)
+  if [[ "$AUTO_MODE" == false ]]; then
+      echo -n "Tag detected as '${TAG}'. Press Enter to use this, or type a different tag: "
+      read USER_TAG
+      if [[ -n "$USER_TAG" ]]; then
+          TAG="$USER_TAG"
+          echo -e "${YELLOW}✏️  Using custom tag: ${TAG}${NC}"
+      fi
+  else
+      echo -e "${GREEN}🤖 Auto mode: Using detected tag: ${TAG}${NC}"
+  fi
 
-  echo -n "Add additional tags? (e.g., v1.0.0, comma-separated, or press Enter to skip): "
-  read ADDITIONAL_TAGS
+  # Get additional tags
+  local ADDITIONAL_TAGS=""
+  if [[ "$AUTO_MODE" == false ]]; then
+      echo -n "Add additional tags? (e.g., v1.0.0, comma-separated, or press Enter to skip): "
+      read ADDITIONAL_TAGS
+  else
+      echo -e "${GREEN}🤖 Auto mode: No additional tags${NC}"
+  fi
 
   local FULL_IMAGE="${REGISTRY_URL}/${IMAGE_NAME}:${TAG}"
   local TAG_ARGS="--tag ${FULL_IMAGE}"
@@ -154,13 +209,18 @@ function build-multiplatform() {
   # Bootstrap the builder
   docker buildx inspect --bootstrap
 
-  echo ""
-  echo -n "Ready to build and push? (y/n): "
-  read CONFIRM
+  # Build confirmation (unless in auto mode)
+  if [[ "$AUTO_MODE" == false ]]; then
+      echo ""
+      echo -n "Ready to build and push? (y/n): "
+      read CONFIRM
 
-  if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
-      echo "Build cancelled"
-      return 0
+      if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+          echo "Build cancelled"
+          return 0
+      fi
+  else
+      echo -e "${GREEN}🤖 Auto mode: Proceeding with build${NC}"
   fi
 
   echo ""
