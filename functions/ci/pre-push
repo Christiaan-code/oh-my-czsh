@@ -1,0 +1,88 @@
+# Pre-push hook for version bumping
+# This script prompts the user to select a version bump type before pushing
+
+# Get the remote and URL being pushed to
+remote="$1"
+url="$2"
+
+# Check if the last commit is a version bump (to avoid infinite loop)
+LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+if echo "$LAST_COMMIT_MSG" | grep -q "chore(release): bump version to"; then
+  echo "✅ Version bump commit detected, skipping version prompt"
+  npm run build:multi
+  exit 0
+fi
+
+echo ""
+echo "🏷️  Version Bump Required"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Get current version
+CURRENT_VERSION=$(node -p "require('./package.json').version")
+echo "Current version: $CURRENT_VERSION"
+echo ""
+
+# Calculate what the new versions would be
+PATCH_VERSION=$(npm version patch --no-git-tag-version 2>/dev/null && node -p "require('./package.json').version" && npm version $CURRENT_VERSION --no-git-tag-version 2>/dev/null)
+MINOR_VERSION=$(npm version minor --no-git-tag-version 2>/dev/null && node -p "require('./package.json').version" && npm version $CURRENT_VERSION --no-git-tag-version 2>/dev/null)
+MAJOR_VERSION=$(npm version major --no-git-tag-version 2>/dev/null && node -p "require('./package.json').version" && npm version $CURRENT_VERSION --no-git-tag-version 2>/dev/null)
+
+echo "Select version bump type:"
+echo "  1) patch (bug fixes)           - ${CURRENT_VERSION} → ${PATCH_VERSION}"
+echo "  2) minor (new features)        - ${CURRENT_VERSION} → ${MINOR_VERSION}"
+echo "  3) major (breaking changes)    - ${CURRENT_VERSION} → ${MAJOR_VERSION}"
+echo "  4) skip (no version bump)"
+echo ""
+
+# Read user input (redirect stdin from terminal for interactive input)
+exec < /dev/tty
+printf "Enter choice [1-4]: "
+read choice
+echo ""
+
+bump_version() {
+  local version_type=$1
+  echo "📦 Bumping $version_type version..."
+  
+  # Bump the version (this creates a commit and tag)
+  npm version $version_type -m "chore(release): bump version to %s"
+  if [ $? -ne 0 ]; then
+    echo "❌ Version bump failed"
+    exit 1
+  fi
+  
+  NEW_VERSION=$(node -p "require('./package.json').version")
+  echo "✅ Version bumped to $NEW_VERSION"
+  echo ""
+  
+  # Push the tag synchronously (git push won't push it automatically)
+  echo "📤 Pushing tag v$NEW_VERSION..."
+  git push $remote "v$NEW_VERSION"
+  
+  echo "✅ Proceeding with push (commit will be included)..."
+  # Allow the original push to continue - it will include the version commit
+  exit 0
+}
+
+case $choice in
+  1)
+    bump_version "patch"
+    ;;
+  2)
+    bump_version "minor"
+    ;;
+  3)
+    bump_version "major"
+    ;;
+  4)
+    echo "⏭️  Skipping version bump"
+    echo "✅ Proceeding with push..."
+    exit 0
+    ;;
+  *)
+    echo "❌ Invalid choice. Aborting push."
+    exit 1
+    ;;
+esac
+
