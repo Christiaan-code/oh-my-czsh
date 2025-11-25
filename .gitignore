@@ -1,3 +1,4 @@
 .zshrc
 *.config.zsh
 .vscode/*
+private-exports.zsh
