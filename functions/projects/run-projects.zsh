@@ -18,8 +18,13 @@ function execute_project() {
       echo "${MAGENTA}Executing: ${MAGENTA_BOLD}co $branch${NC}" &&
         co "$branch"
     fi &&
-    echo "${MAGENTA}Executing: ${MAGENTA_BOLD}yarn${NC}" &&
-    yarn &&
+    if [ "$project_alias" = "coeditor" ]; then
+      echo "${MAGENTA}Executing: ${MAGENTA_BOLD}pnpm install${NC}" &&
+        pnpm install
+    else
+      echo "${MAGENTA}Executing: ${MAGENTA_BOLD}yarn${NC}" &&
+        yarn
+    fi &&
     echo "${MAGENTA}Executing: ${MAGENTA_BOLD}$project_commands${NC}" &&
     eval "$project_commands"
 }
