@@ -37,10 +37,27 @@ function configure-zsh() {
     ;;
   esac
 
+  # Configure main development branches for git-cleanup
+  echo "\n${BLUE}Enter the names of your main development branches (comma-separated):${NC}"
+  echo "${GREY}These branches will be protected from git-cleanup${NC}"
+  echo -n "Branches [main,stage]: "
+
+  read branches_input
+
+  if [[ -z "$branches_input" ]]; then
+    branches_input="main,stage"
+  fi
+
+  # Clean up the input: remove spaces around commas
+  branches_input=$(echo "$branches_input" | tr -d ' ')
+  ZSH_PREFERENCES[protected_branches]="$branches_input"
+  echo "${GREEN}✓ Protected branches set to: $branches_input${NC}"
+
   # Save preferences to config file
   mkdir -p ~/.zsh/config/preferences
   echo "# ZSH Preferences Configuration" >~/.zsh/config/preferences/preferences.config.zsh
   echo "ZSH_PREFERENCES[preferred_terminal]=\"${ZSH_PREFERENCES[preferred_terminal]}\"" >>~/.zsh/config/preferences/preferences.config.zsh
+  echo "ZSH_PREFERENCES[protected_branches]=\"${ZSH_PREFERENCES[protected_branches]}\"" >>~/.zsh/config/preferences/preferences.config.zsh
 
   echo "\n${GREEN_BOLD}Configuration saved successfully!${NC}"
 }
