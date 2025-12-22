@@ -5,12 +5,18 @@ function git-cleanup() {
   local branch
   local answer
 
-  # Store all branches in array, excluding main/prod
+  # Get protected branches from config, default to main,stage
+  local protected_branches="${ZSH_PREFERENCES[protected_branches]:-main,stage}"
+  # Convert comma-separated list to regex pattern (main,stage -> main|stage)
+  local protected_pattern=$(echo "$protected_branches" | tr ',' '|')
+  local default_branch=$(echo "$protected_branches" | cut -d',' -f1)
+
+  # Store all branches in array, excluding protected branches
   while IFS= read -r branch; do
     branches+=("$branch")
-  done < <(git branch | grep -vE '^\*?\s*(main|prod)$')
+  done < <(git branch | grep -vE "^\*?\s*($protected_pattern)$")
 
-  co main
+  co "$default_branch"
 
   # Process each branch
   for branch in "${branches[@]}"; do

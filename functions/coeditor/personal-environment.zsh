@@ -1,5 +1,5 @@
 function deploy-personal() {
-  pnpm sst:deploy --account dev --stage christiaan
+  echo "y" | pnpm sst:deploy --account dev --stage christiaan
 }
 
 function remove-personal() {
